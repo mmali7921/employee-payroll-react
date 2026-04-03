@@ -1,6 +1,5 @@
 # PayrollPro - Modern Employee Payroll Management System
 
-[![Dashboard](./screenshots/dashboard.png)](./screenshots/dashboard.png)
 
 ## 📋 Problem Statement
 In many organizations, legacy payroll and employee management systems are often manual, error-prone, and lack real-time visibility. This results in administrative overhead, fragmented data, and a poor user experience. **PayrollPro** solves this by providing a unified, high-performance platform that automates personnel registry, payroll processing, and workforce analytics with a state-of-the-art glassmorphic design.
