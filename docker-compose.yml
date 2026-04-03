@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: payroll-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: employee_payroll
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  backend:
+    image: node:18-alpine
+    container_name: payroll-backend
+    working_dir: /app
+    volumes:
+      - ./server:/app
+    ports:
+      - "3001:3001"
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=employee_payroll
+      - PORT=3001
+      - NODE_ENV=development
+      - JWT_SECRET=super_secret_jwt_key_here
+      - CORS_ORIGIN=http://localhost:5173
+    command: sh -c "npm install && npm run migrate || echo 'Migration failed or already executed' && npm run dev"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: node:18-alpine
+    container_name: payroll-frontend
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3001/api
+    command: sh -c "npm install && npm run dev -- --host"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:

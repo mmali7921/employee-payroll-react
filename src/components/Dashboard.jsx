@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { employeesAPI, departmentsAPI } from '../services/api';
+import { Users, Building2, CircleDollarSign, Hourglass, Plus, Edit2, Info, Loader2, FolderPlus, UserPlus } from 'lucide-react';
 
-// Dashboard Stats Component
 function DashboardStats() {
   const [stats, setStats] = useState([
-    { title: 'Total Employees', value: '0', change: '0%', color: 'blue' },
-    { title: 'Active Departments', value: '0', change: '0', color: 'green' },
-    { title: 'Monthly Payroll', value: '$0', change: '0%', color: 'purple' },
-    { title: 'Pending Approvals', value: '0', change: '0', color: 'orange' }
+    { title: 'Total Employees', value: '0', change: '0%', color: 'indigo', icon: Users },
+    { title: 'Active Departments', value: '0', change: '0', color: 'emerald', icon: Building2 },
+    { title: 'Monthly Payroll', value: '$0', change: '0%', color: 'purple', icon: CircleDollarSign },
+    { title: 'Pending Approvals', value: '0', change: '0', color: 'amber', icon: Hourglass }
   ]);
 
   useEffect(() => {
@@ -17,11 +17,9 @@ function DashboardStats() {
 
   const loadDashboardData = async () => {
     try {
-      // Load employees
       const employeesResult = await employeesAPI.getAll();
       const employees = employeesResult.success ? employeesResult.data : [];
       
-      // Load departments
       const departmentsResult = await departmentsAPI.getAll();
       const departments = departmentsResult.success ? departmentsResult.data : [];
 
@@ -31,10 +29,10 @@ function DashboardStats() {
       const totalPayroll = employees.reduce((sum, emp) => sum + (parseFloat(emp.salary) || 0), 0);
 
       setStats([
-        { title: 'Total Employees', value: totalEmployees.toString(), change: `+${activeEmployees} active`, color: 'blue' },
-        { title: 'Active Departments', value: totalDepartments.toString(), change: 'departments', color: 'green' },
-        { title: 'Monthly Payroll', value: `$${totalPayroll.toLocaleString()}`, change: 'total', color: 'purple' },
-        { title: 'Pending Approvals', value: '0', change: 'none', color: 'orange' }
+        { title: 'Total Employees', value: totalEmployees.toString(), change: `+${activeEmployees} active`, color: 'indigo', icon: Users },
+        { title: 'Active Departments', value: totalDepartments.toString(), change: 'departments', color: 'emerald', icon: Building2 },
+        { title: 'Monthly Payroll', value: `$${totalPayroll.toLocaleString()}`, change: 'total', color: 'purple', icon: CircleDollarSign },
+        { title: 'Pending Approvals', value: '0', change: 'none', color: 'amber', icon: Hourglass }
       ]);
     } catch (error) {
       console.error('Error loading dashboard data:', error);
@@ -43,26 +41,32 @@ function DashboardStats() {
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-      {stats.map((stat, index) => (
-        <div key={index} className="stat-card">
-          <div className="stat-content">
-            <h3 className="stat-title">{stat.title}</h3>
-            <p className="stat-value">{stat.value}</p>
-            <p className={`stat-change stat-change-${stat.color}`}>{stat.change}</p>
+      {stats.map((stat, index) => {
+        const Icon = stat.icon;
+        const colorStyles = {
+          indigo: 'bg-indigo-500/10 text-indigo-400',
+          emerald: 'bg-emerald-500/10 text-emerald-400',
+          purple: 'bg-purple-500/10 text-purple-400',
+          amber: 'bg-amber-500/10 text-amber-400'
+        }[stat.color];
+
+        return (
+          <div key={index} className="bg-slate-900 border border-slate-800 rounded-xl p-6 flex items-center justify-between hover:border-slate-700 hover:shadow-lg transition-all group animate-fade-in" style={{animationDelay: `${index * 100}ms`}}>
+            <div className="flex-1">
+              <h3 className="text-sm font-medium text-slate-400 mb-1">{stat.title}</h3>
+              <p className="text-3xl font-bold tracking-tight text-slate-100 mb-1">{stat.value}</p>
+              <p className={`text-xs font-medium ${stat.color === 'emerald' ? 'text-emerald-500' : 'text-slate-500'}`}>{stat.change}</p>
+            </div>
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${colorStyles} group-hover:scale-110 transition-transform`}>
+              <Icon className="w-6 h-6" />
+            </div>
           </div>
-          <div className={`stat-icon stat-icon-${stat.color}`}>
-            {stat.title.includes('Employees') && '👥'}
-            {stat.title.includes('Departments') && '🏢'}
-            {stat.title.includes('Payroll') && '💰'}
-            {stat.title.includes('Approvals') && '⏳'}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
-// Recent Activity Component
 function RecentActivity() {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,172 +85,133 @@ function RecentActivity() {
 
       const activities = [];
 
-      // Add recent employees
       if (employeesResult.success && employeesResult.data) {
-        const recentEmployees = employeesResult.data
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        const recentEmployees = [...employeesResult.data]
+          .sort((a, b) => new Date(b.created_at || new Date()) - new Date(a.created_at || new Date()))
           .slice(0, 3);
         
         recentEmployees.forEach(emp => {
           activities.push({
-            action: `New employee added: ${emp.emp_name}`,
-            user: emp.department,
-            time: formatTimeAgo(emp.created_at),
+            action: `New employee added: ${emp.emp_name || emp.first_name + ' ' + emp.last_name}`,
+            user: emp.department || 'HR',
+            time: 'Recently',
             type: 'add'
           });
         });
       }
 
-      // Add recent departments
       if (departmentsResult.success && departmentsResult.data) {
-        const recentDepartments = departmentsResult.data
-          .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
+        const recentDepartments = [...departmentsResult.data]
+          .sort((a, b) => new Date(b.created_at || new Date()) - new Date(a.created_at || new Date()))
           .slice(0, 2);
         
         recentDepartments.forEach(dept => {
           activities.push({
-            action: `Department created: ${dept.name}`,
-            user: dept.manager,
-            time: formatTimeAgo(dept.created_at),
+            action: `Department updated: ${dept.department_name || dept.name}`,
+            user: 'Admin',
+            time: 'Recently',
             type: 'update'
           });
         });
       }
 
-      // Sort by time and take the most recent 4
-      setActivities(activities
-        .sort((a, b) => new Date(b.time) - new Date(a.time))
-        .slice(0, 4)
-      );
+      setActivities(activities.slice(0, 4));
     } catch (error) {
-      console.error('Error loading recent activity:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const formatTimeAgo = (dateString) => {
-    const now = new Date();
-    const date = new Date(dateString);
-    const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
-    
-    if (diffInHours < 1) return 'Just now';
-    if (diffInHours < 24) return `${diffInHours} hours ago`;
-    const diffInDays = Math.floor(diffInHours / 24);
-    if (diffInDays < 7) return `${diffInDays} days ago`;
-    return date.toLocaleDateString();
-  };
-
   if (loading) {
     return (
-      <div className="card">
-        <div className="card-header">
-          <h2 className="card-title">Recent Activity</h2>
-        </div>
-        <div className="card-content">
-          <div className="loading-container">
-            <div className="loading-spinner"></div>
-            <p>Loading activity...</p>
-          </div>
-        </div>
+      <div className="bg-slate-900 border border-slate-800 rounded-xl flex flex-col h-full animate-pulse">
+        <div className="px-6 py-5 border-b border-slate-800"><div className="h-6 w-32 bg-slate-800 rounded"></div></div>
+        <div className="p-6 flex-1 flex items-center justify-center text-slate-500"><Loader2 className="w-6 h-6 animate-spin" /></div>
       </div>
     );
   }
 
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title">Recent Activity</h2>
+    <div className="bg-slate-900 border border-slate-800 rounded-xl flex flex-col h-full">
+      <div className="px-6 py-5 border-b border-slate-800">
+        <h2 className="text-lg font-semibold text-slate-100">Recent Activity</h2>
       </div>
-      <div className="card-content">
-        <div className="activity-list">
-          {activities.length === 0 ? (
-            <div className="empty-state">
-              <div className="empty-icon">📊</div>
-              <h3>No recent activity</h3>
-              <p>Start by adding employees or departments</p>
-            </div>
-          ) : (
-            activities.map((activity, index) => (
-              <div key={index} className="activity-item">
-                <div className={`activity-icon activity-icon-${activity.type}`}>
-                  {activity.type === 'add' && '➕'}
-                  {activity.type === 'payroll' && '💰'}
-                  {activity.type === 'update' && '✏️'}
-                  {activity.type === 'promotion' && '⬆️'}
-                </div>
-                <div className="activity-content">
-                  <p className="activity-action">{activity.action}</p>
-                  <p className="activity-meta">{activity.user} • {activity.time}</p>
-                </div>
+      <div className="p-6 flex-1 flex flex-col gap-6">
+        {activities.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-500 py-8">
+            <Info className="w-8 h-8 mb-3 opacity-50" />
+            <p>No recent activity</p>
+          </div>
+        ) : (
+          activities.map((activity, index) => (
+            <div key={index} className="flex gap-4 items-start">
+              <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                activity.type === 'add' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'
+              }`}>
+                {activity.type === 'add' ? <Plus className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
               </div>
-            ))
-          )}
-        </div>
+              <div>
+                <p className="text-sm font-medium text-slate-200">{activity.action}</p>
+                <p className="text-xs text-slate-500 mt-1">{activity.user} • {activity.time}</p>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
 }
 
-// Quick Actions Component
 function QuickActions() {
+  const actions = [
+    { name: 'Add Employee', path: '/employees/add', icon: UserPlus, color: 'text-indigo-400 bg-indigo-500/10' },
+    { name: 'Process Payroll', path: '/payroll', icon: CircleDollarSign, color: 'text-emerald-400 bg-emerald-500/10' },
+    { name: 'Manage Departments', path: '/departments', icon: FolderPlus, color: 'text-purple-400 bg-purple-500/10' },
+    { name: 'Generate Reports', path: '/reports', icon: Users, color: 'text-blue-400 bg-blue-500/10' },
+  ];
+
   return (
-    <div className="card">
-      <div className="card-header">
-        <h2 className="card-title">Quick Actions</h2>
+    <div className="bg-slate-900 border border-slate-800 rounded-xl flex flex-col h-full">
+      <div className="px-6 py-5 border-b border-slate-800">
+        <h2 className="text-lg font-semibold text-slate-100">Quick Actions</h2>
       </div>
-      <div className="card-content">
-        <div className="quick-actions-grid">
-          <Link to="/employees/add" className="quick-action-btn">
-            <div className="quick-action-icon">👤</div>
-            <span>Add Employee</span>
-          </Link>
-          <Link to="/payroll/process" className="quick-action-btn">
-            <div className="quick-action-icon">💰</div>
-            <span>Process Payroll</span>
-          </Link>
-          <Link to="/departments" className="quick-action-btn">
-            <div className="quick-action-icon">🏢</div>
-            <span>Manage Departments</span>
-          </Link>
-          <Link to="/reports" className="quick-action-btn">
-            <div className="quick-action-icon">📊</div>
-            <span>Generate Reports</span>
-          </Link>
+      <div className="p-6 flex-1">
+        <div className="grid grid-cols-2 gap-4">
+          {actions.map((action, i) => {
+            const Icon = action.icon;
+            return (
+              <Link key={i} to={action.path} className="flex items-center gap-3 p-4 rounded-xl border border-slate-800 hover:border-indigo-500/50 hover:bg-slate-800/50 transition-all group">
+                <div className={`p-2 rounded-lg ${action.color} group-hover:scale-110 transition-transform`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <span className="text-sm font-medium text-slate-300 group-hover:text-slate-100">{action.name}</span>
+              </Link>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
 
-// Main Dashboard Component
 function Dashboard() {
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1 className="page-title">Employee Payroll Dashboard</h1>
-          <p className="page-subtitle">Manage your workforce and payroll efficiently</p>
-        </div>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent">Employee Payroll Dashboard</h1>
+        <p className="text-slate-400 mt-1">Manage your workforce and payroll efficiently</p>
       </div>
 
-      <div className="page-content">
-        {/* Welcome Message */}
-        <div className="info-message">
-          <span className="info-icon">ℹ️</span>
-          <div className="info-content">
-            <p>Welcome to PayrollPro! Your employee management system is ready to use. Start by adding employees or managing departments.</p>
-          </div>
-        </div>
+      <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 flex gap-4 items-start mb-8 text-indigo-200">
+        <Info className="w-5 h-5 text-indigo-400 flex-shrink-0 mt-0.5" />
+        <p className="text-sm">Welcome to PayrollPro! Your premium employee management system is ready to use. Start by adding employees or managing departments.</p>
+      </div>
 
-        <DashboardStats />
-        
-        <div className="grid gap-6 mt-8">
-          <div className="lg:grid-cols-2 grid gap-6">
-            <RecentActivity />
-            <QuickActions />
-          </div>
-        </div>
+      <DashboardStats />
+      
+      <div className="grid lg:grid-cols-2 gap-6 mt-6">
+        <RecentActivity />
+        <QuickActions />
       </div>
     </div>
   );

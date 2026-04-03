@@ -5,6 +5,7 @@ const AuthContext = createContext();
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem('payroll_user');
@@ -13,6 +14,7 @@ export function AuthProvider({ children }) {
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
     }
+    setIsLoading(false);
   }, []);
 
   const login = (userData, token) => {
@@ -30,7 +32,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ user, isAuthenticated, isLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

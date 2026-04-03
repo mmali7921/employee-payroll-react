@@ -1,6 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { employeesAPI, departmentsAPI } from '../services/api';
+import { 
+  User, 
+  Mail, 
+  Briefcase, 
+  Building2, 
+  DollarSign, 
+  Calendar, 
+  Phone, 
+  MapPin, 
+  HeartPulse, 
+  Loader2, 
+  ChevronLeft, 
+  Save, 
+  AlertCircle
+} from 'lucide-react';
 
 function AddEmployeePage() {
   const [formData, setFormData] = useState({
@@ -59,50 +74,14 @@ function AddEmployeePage() {
       setLoading(false);
       return;
     }
-    // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.emp_mail_id.trim())) {
-      setError('Please enter a valid email address (e.g., user@example.com)');
-      setLoading(false);
-      return;
-    }
-    if (!formData.department) {
-      setError('Department is required');
-      setLoading(false);
-      return;
-    }
-    // Check if department exists in the loaded departments
-    const departmentExists = departments.some(dept => dept.name === formData.department);
-    if (!departmentExists) {
-      setError('Please select a valid department');
-      setLoading(false);
-      return;
-    }
-    if (!formData.position.trim()) {
-      setError('Position is required');
-      setLoading(false);
-      return;
-    }
-    if (!formData.salary || parseFloat(formData.salary) <= 0) {
-      setError('Valid salary is required (must be greater than 0)');
-      setLoading(false);
-      return;
-    }
-    // Check if salary is a valid number
-    const salaryValue = parseFloat(formData.salary);
-    if (isNaN(salaryValue)) {
-      setError('Salary must be a valid number');
-      setLoading(false);
-      return;
-    }
-    if (!formData.hire_date) {
-      setError('Hire date is required');
+      setError('Please enter a valid email address');
       setLoading(false);
       return;
     }
 
     try {
-      // Format the data properly - only include required fields and non-empty optional fields
       const employeeData = {
         emp_name: formData.emp_name.trim(),
         emp_mail_id: formData.emp_mail_id.trim(),
@@ -110,35 +89,18 @@ function AddEmployeePage() {
         position: formData.position.trim(),
         salary: parseFloat(formData.salary),
         hire_date: formData.hire_date,
-        status: formData.status
+        status: formData.status,
+        phone: formData.phone.trim(),
+        address: formData.address.trim(),
+        emergency_contact: formData.emergency_contact.trim(),
+        emergency_phone: formData.emergency_phone.trim()
       };
-
-      // Only add optional fields if they have values
-      if (formData.phone && formData.phone.trim()) {
-        employeeData.phone = formData.phone.trim();
-      }
-      if (formData.address && formData.address.trim()) {
-        employeeData.address = formData.address.trim();
-      }
-      if (formData.emergency_contact && formData.emergency_contact.trim()) {
-        employeeData.emergency_contact = formData.emergency_contact.trim();
-      }
-      if (formData.emergency_phone && formData.emergency_phone.trim()) {
-        employeeData.emergency_phone = formData.emergency_phone.trim();
-      }
 
       const result = await employeesAPI.create(employeeData);
       if (result.success) {
-        alert('Employee added successfully!');
         navigate('/employees');
       } else {
-        // Handle validation errors specifically
-        console.log('Error details:', result); // Debug log
-        if (result.errors && Array.isArray(result.errors)) {
-          setError(result.errors.join(', '));
-        } else {
-          setError(result.message || 'Failed to add employee');
-        }
+        setError(result.message || 'Failed to initialize employee record');
       }
     } catch (err) {
       setError('Failed to add employee');
@@ -149,206 +111,244 @@ function AddEmployeePage() {
   };
 
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <div className="page-title-section">
-          <h1 className="page-title">Add New Employee</h1>
-          <p className="page-subtitle">Enter employee information</p>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fade-in text-slate-200">
+      <button 
+        onClick={() => navigate('/employees')}
+        className="flex items-center gap-2 text-slate-500 hover:text-slate-300 mb-8 transition-colors group"
+      >
+        <ChevronLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+        Back to Personnel
+      </button>
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-100 to-slate-400 bg-clip-text text-transparent flex items-center gap-3">
+            Onboard New Personnel
+          </h1>
+          <p className="text-slate-400 mt-1">Initialize record for a new organizational member</p>
         </div>
       </div>
 
-      <div className="page-content">
-        <div className="card">
-          <div className="card-content">
-            <form onSubmit={handleSubmit} className="form">
-              {error && (
-                <div className="error-message">
-                  <span className="error-icon">❌</span>
-                  {error}
-                </div>
-              )}
+      <form onSubmit={handleSubmit} className="space-y-8 pb-12">
+        {error && (
+          <div className="p-4 bg-red-950/30 border border-red-900/30 rounded-xl flex items-center gap-3 text-red-400 animate-slide-up">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm">{error}</p>
+          </div>
+        )}
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="emp_name" className="form-label">Full Name *</label>
-                  <input
-                    type="text"
-                    id="emp_name"
-                    name="emp_name"
-                    value={formData.emp_name}
-                    onChange={handleChange}
-                    className="form-input"
-                    placeholder="Enter full name"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="emp_mail_id" className="form-label">Email *</label>
-                  <input
-                    type="email"
-                    id="emp_mail_id"
-                    name="emp_mail_id"
-                    value={formData.emp_mail_id}
-                    onChange={handleChange}
-                    className="form-input"
-                    placeholder="e.g., john.doe@company.com"
-                    required
-                  />
-                  <small className="form-hint">Enter a valid email address with domain extension. Email must be unique.</small>
-                </div>
+        {/* Section: Personal Info */}
+        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-3xl p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-400">
+              <User className="w-5 h-5" />
+            </div>
+            <h3 className="text-xl font-semibold text-slate-100">Primary Identity</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Full Name</label>
+              <div className="relative">
+                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <input
+                  type="text"
+                  name="emp_name"
+                  value={formData.emp_name}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="e.g. Jean-Luc Picard"
+                  required
+                />
               </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="department" className="form-label">Department *</label>
-                  <select
-                    id="department"
-                    name="department"
-                    value={formData.department}
-                    onChange={handleChange}
-                    className="form-input"
-                    required
-                  >
-                    <option value="">Select Department</option>
-                    {departments.map(dept => (
-                      <option key={dept.id} value={dept.name}>
-                        {dept.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="position" className="form-label">Position *</label>
-                  <input
-                    type="text"
-                    id="position"
-                    name="position"
-                    value={formData.position}
-                    onChange={handleChange}
-                    className="form-input"
-                    placeholder="Enter job position"
-                    required
-                  />
-                </div>
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Corporate Email</label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <input
+                  type="email"
+                  name="emp_mail_id"
+                  value={formData.emp_mail_id}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="j.picard@company.com"
+                  required
+                />
               </div>
+            </div>
+          </div>
+        </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="salary" className="form-label">Salary *</label>
-                  <input
-                    type="number"
-                    id="salary"
-                    name="salary"
-                    value={formData.salary}
-                    onChange={handleChange}
-                    className="form-input"
-                    placeholder="Enter salary amount"
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="hire_date" className="form-label">Hire Date *</label>
-                  <input
-                    type="date"
-                    id="hire_date"
-                    name="hire_date"
-                    value={formData.hire_date}
-                    onChange={handleChange}
-                    className="form-input"
-                    required
-                  />
-                </div>
+        {/* Section: Employment Details */}
+        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-3xl p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 bg-purple-500/10 rounded-xl flex items-center justify-center text-purple-400">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <h3 className="text-xl font-semibold text-slate-100">Employment Logistics</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Organizational Unit</label>
+              <div className="relative">
+                <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <select
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none transition-all cursor-pointer"
+                  required
+                >
+                  <option value="" disabled className="bg-slate-900 text-slate-500">Select Department</option>
+                  {departments.map(dept => (
+                    <option key={dept.id} value={dept.name} className="bg-slate-900 border-none">{dept.name}</option>
+                  ))}
+                </select>
               </div>
+            </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="phone" className="form-label">Phone</label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="form-input"
-                    placeholder="Enter phone number"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="status" className="form-label">Status</label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className="form-input"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                    <option value="On Leave">On Leave</option>
-                  </select>
-                </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Job Position</label>
+              <div className="relative">
+                <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <input
+                  type="text"
+                  name="position"
+                  value={formData.position}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="e.g. Senior Strategist"
+                  required
+                />
               </div>
+            </div>
 
-              <div className="form-group">
-                <label htmlFor="address" className="form-label">Address</label>
-                <textarea
-                  id="address"
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Annual Salary (USD)</label>
+              <div className="relative">
+                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <input
+                  type="number"
+                  name="salary"
+                  value={formData.salary}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Activation Date</label>
+              <div className="relative">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <input
+                  type="date"
+                  name="hire_date"
+                  value={formData.hire_date}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-950/50 border border-slate-800 rounded-xl text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all [color-scheme:dark]"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section: Contact & Emergency */}
+        <div className="bg-slate-900/40 backdrop-blur-md border border-slate-800 rounded-3xl p-8">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400">
+              <Phone className="w-5 h-5" />
+            </div>
+            <h3 className="text-xl font-semibold text-slate-100">Context & Safety</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Phone Extension</label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="+1 (555) 000-0000"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Residency</label>
+              <div className="relative">
+                <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <input
+                  type="text"
                   name="address"
                   value={formData.address}
                   onChange={handleChange}
-                  className="form-input"
-                  placeholder="Enter address"
-                  rows="3"
+                  className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="City, Province, Space"
                 />
               </div>
+            </div>
 
-              <div className="form-row">
-                <div className="form-group">
-                  <label htmlFor="emergency_contact" className="form-label">Emergency Contact</label>
-                  <input
-                    type="text"
-                    id="emergency_contact"
-                    name="emergency_contact"
-                    value={formData.emergency_contact}
-                    onChange={handleChange}
-                    className="form-input"
-                    placeholder="Emergency contact name"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="emergency_phone" className="form-label">Emergency Phone</label>
-                  <input
-                    type="tel"
-                    id="emergency_phone"
-                    name="emergency_phone"
-                    value={formData.emergency_phone}
-                    onChange={handleChange}
-                    className="form-input"
-                    placeholder="Emergency contact phone"
-                  />
-                </div>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Emergency Liaison</label>
+              <div className="relative">
+                <HeartPulse className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <input
+                  type="text"
+                  name="emergency_contact"
+                  value={formData.emergency_contact}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="Full name of contact"
+                />
               </div>
+            </div>
 
-              <div className="form-actions">
-                <button 
-                  type="submit" 
-                  className={`btn btn-primary ${loading ? 'loading' : ''}`}
-                  disabled={loading}
-                >
-                  {loading ? 'Adding Employee...' : 'Add Employee'}
-                </button>
-                <button 
-                  type="button" 
-                  onClick={() => navigate('/employees')}
-                  className="btn btn-secondary"
-                >
-                  Cancel
-                </button>
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Emergency Network</label>
+              <div className="relative">
+                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                <input
+                  type="tel"
+                  name="emergency_phone"
+                  value={formData.emergency_phone}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 transition-all"
+                  placeholder="Contact phone number"
+                />
               </div>
-            </form>
+            </div>
           </div>
         </div>
-      </div>
+
+        <div className="flex flex-col md:flex-row gap-4 pt-6 pb-20">
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="flex-1 py-4 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-2xl font-bold shadow-xl shadow-indigo-900/20 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
+            Initialize Employee Account
+          </button>
+          <button 
+            type="button" 
+            onClick={() => navigate('/employees')}
+            className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-2xl font-medium transition-all"
+          >
+            Discard
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
